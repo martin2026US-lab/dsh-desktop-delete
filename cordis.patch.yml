@@ -1,0 +1,4 @@
+- insert:
+    - id: dsh-desktop-delete
+      name: dsh-desktop-delete
+      config: {}
