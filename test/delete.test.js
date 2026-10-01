@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, writeFile, access } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile, access, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -89,7 +89,7 @@ test("historical generation uses the JSONL backend locator when no current log e
   const f=await fixture(t);
   f.ctx.sessionPersistence.resolveCurrentLog=async()=>undefined;
   f.ctx.sessionPersistence.locate=header=>{assert.equal(header.id,f.id);return {kind:"jsonl",path:f.log};};
-  assert.equal(await resolveDirectory(f.ctx,f.id),f.dir);
+  assert.equal(await resolveDirectory(f.ctx,f.id),await realpath(f.dir));
   await deleteSession(f.ctx,f.id);await assert.rejects(access(f.dir));
 });
 test("historical locator still refuses foreign roots and non-JSONL storage",async t=>{
