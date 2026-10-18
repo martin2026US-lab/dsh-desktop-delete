@@ -4,11 +4,11 @@
 
 A small community plugin that adds **Delete conversation** to the DeepSeek Harness desktop session menu. Includes a native confirmation dialog and Chinese/English labels.
 
-**Version:** 0.1.1 · **Tested Harness:** 0.2.0-rc.2 · **License:** MIT
+**Version:** 0.1.2 · **Target Harness:** 0.2.1-rc.2 (also supports 0.2.0-rc.2) · **License:** MIT
 
 ## Screenshots
 
-These four screenshots were provided from the installed desktop application, using a conversation titled “Hello”. They show the menu and confirmation dialog; deletion persistence is covered separately in [VALIDATION.md](VALIDATION.md).
+These four screenshots were provided from the 0.1.1 / Harness 0.2.0-rc.2 installed desktop application, using a conversation titled “Hello”. They show the menu and confirmation dialog; deletion persistence is covered separately in [VALIDATION.md](VALIDATION.md).
 
 | English menu | English confirmation |
 | --- | --- |
@@ -20,7 +20,7 @@ These four screenshots were provided from the installed desktop application, usi
 
 ## Install on Windows
 
-1. Download **dsh-desktop-delete-0.1.1-windows.zip** from [Releases](https://github.com/martin2026US-lab/dsh-desktop-delete/releases/latest) and extract it.
+1. Download **dsh-desktop-delete-0.1.2-windows.zip** from [Releases](https://github.com/martin2026US-lab/dsh-desktop-delete/releases/latest) and extract it.
 2. Fully quit Harness using **Exit** in the system tray. Closing its window leaves the background process running.
 3. Run the following in PowerShell 7, replacing the directory with the extracted folder:
 
@@ -28,14 +28,14 @@ These four screenshots were provided from the installed desktop application, usi
 & 'C:\Program Files\PowerShell\7\pwsh.exe' -NoLogo -NoProfile -File '<extracted-folder>\Install.ps1'
 ~~~
 
-The ZIP keeps Install.ps1 and dsh-desktop-delete-0.1.1.tgz together. Add **-ApplicationPath** with the path to DeepSeek Harness.exe for a custom location, or **-CheckOnly** to check compatibility without installing. The script uses the desktop application's bundled command runtime; you do not need a separate Node.js/npm installation for installation.
+The ZIP keeps Install.ps1 and dsh-desktop-delete-0.1.2.tgz together. Add **-ApplicationPath** with the path to DeepSeek Harness.exe for a custom location, or **-CheckOnly** to check compatibility without installing. The script uses the desktop application's bundled command runtime; you do not need a separate Node.js/npm installation for installation.
 
 4. Reopen Harness. Choose **Delete conversation** in the three-dot menu and confirm.
 
 For manual installation, use the **desktop-bundled** dsh command, with Harness fully exited:
 
 ~~~powershell
-dsh plugin --profile desktop add '<full-path>\dsh-desktop-delete-0.1.1.tgz'
+dsh plugin --profile desktop add '<full-path>\dsh-desktop-delete-0.1.2.tgz'
 ~~~
 
 To uninstall, fully quit Harness and use the same bundled command:
@@ -59,7 +59,7 @@ Deletion is permanent. Workspace files, other conversations and shared attachmen
 
 ## Compatibility
 
-Validated against the official **Harness desktop 0.2.0-rc.2** Windows build. This version has no public close-one-session API, so the plugin checks and uses version-specific lifecycle/writer internals. The Harness engine is pinned; revalidation is required before using a different release. Refused operations display an error and preserve the conversation whenever rollback succeeds.
+Targets official **Harness desktop 0.2.1-rc.2**, retaining support for **0.2.0-rc.2**. The new release was checked against the official release source and published runtime services on Windows; installed-app UI testing has not been repeated for 0.2.1-rc.2. These versions have no public close-one-session API, so the plugin checks version-specific lifecycle/writer internals. The Harness engine accepts exactly these two releases; other releases require revalidation. Refused operations display an error and preserve the conversation whenever rollback succeeds.
 
 ## Development and tests
 
@@ -70,7 +70,7 @@ npm run verify
 npm pack
 ~~~
 
-The twelve standalone tests run in GitHub Actions on Windows and Linux. Eight optional tests exercise real Harness runtime services; see [integration setup](test/integration/README.md). Both suites passed locally, **20/20**. [VALIDATION.md](VALIDATION.md) distinguishes native-runtime, fixture-UI and installed-app evidence.
+The standalone suite has 19 tests (four Windows installer checks skip on Linux). Eight integration tests exercise real Harness 0.2.1-rc.2 runtime services; see [integration setup](test/integration/README.md). Both suites passed locally on Windows, **27/27**. GitHub Actions runs both suites on Windows and Linux. [VALIDATION.md](VALIDATION.md) distinguishes native-runtime, fixture-UI and installed-app evidence.
 
 ## Credits
 

@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      DSH_RUNTIME_ROOT: ${{ github.workspace }}/test/integration/runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate version and run tests
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -cne "v$version") { throw 'Tag and package version differ.' }
+          npm ci --ignore-scripts --prefix test/integration/runtime
+          if ($LASTEXITCODE -ne 0) { throw 'Runtime installation failed.' }
+          npm run verify
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone verification failed.' }
+          npm run test:integration
+          if ($LASTEXITCODE -ne 0) { throw 'Runtime verification failed.' }
+      - name: Build release assets
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          New-Item -ItemType Directory -Path dist | Out-Null
+          npm pack --pack-destination dist
+          if ($LASTEXITCODE -ne 0) { throw 'Packaging failed.' }
+          Copy-Item Install.ps1 dist
+          $package = "dist/dsh-desktop-delete-$version.tgz"
+          $zip = "dist/dsh-desktop-delete-$version-windows.zip"
+          Compress-Archive -LiteralPath $package, dist/Install.ps1 -DestinationPath $zip
+          $hashes = @($package, $zip) | ForEach-Object {
+            $hash = Get-FileHash -LiteralPath $_ -Algorithm SHA256
+            "$($hash.Hash.ToLowerInvariant())  $(Split-Path -Leaf $_)"
+          }
+          $hashes | Set-Content -LiteralPath dist/SHA256SUMS.txt -Encoding utf8NoBOM
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $notes = [regex]::Match($changelog, '(?s)## ' + [regex]::Escape($version) + '[^\r\n]*\r?\n(.*?)(?=\r?\n## |\z)').Groups[1].Value.Trim()
+          if (-not $notes) { throw 'Release notes not found.' }
+          $notes | Set-Content -LiteralPath dist/RELEASE_NOTES.md -Encoding utf8NoBOM
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          gh release create $env:GITHUB_REF_NAME "dist/dsh-desktop-delete-$version.tgz" "dist/dsh-desktop-delete-$version-windows.zip" dist/SHA256SUMS.txt --verify-tag --title "v$version — Harness desktop compatibility" --notes-file dist/RELEASE_NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }

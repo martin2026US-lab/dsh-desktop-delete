@@ -20,3 +20,18 @@ jobs:
           node-version: '24'
       - run: npm run verify
       - run: npm pack
+
+  runtime:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      DSH_RUNTIME_ROOT: ${{ github.workspace }}/test/integration/runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --prefix test/integration/runtime
+      - run: npm run test:integration

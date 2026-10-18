@@ -2,19 +2,20 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const runtimeRoot = process.env.DSH_RUNTIME_ROOT;
-if (!runtimeRoot) throw new Error('Set DSH_RUNTIME_ROOT to an extracted Harness 0.2.0-rc.2 runtime containing node_modules. See test/integration/README.md.');
+if (!runtimeRoot) throw new Error('Set DSH_RUNTIME_ROOT to a matching Harness runtime containing node_modules. See test/integration/README.md.');
 
 export function runtimeModule(name) {
   return import(pathToFileURL(join(resolve(runtimeRoot), 'node_modules', '@deepseek-ai', name, 'lib', 'index.js')).href);
 }
 
 const [{ Context }, { default: Sessions }, { default: Agents }, { default: AgentLoop },
-  { default: Projections }, { default: SystemPrompt }, { default: Jsonl },
+  { default: Projections }, { default: SystemPrompt }, JsonlModule,
   { default: Storage }, StorageJson, StorageDomain, { default: Workspaces }] = await Promise.all([
   'cordis', 'dsh-session', 'dsh-agent', 'dsh-agent-loop', 'dsh-session-projection',
   'dsh-system-prompt', 'dsh-session-persistence-jsonl', 'dsh-storage',
   'dsh-storage-json', 'dsh-storage-domain', 'dsh-workspace'
 ].map(runtimeModule));
+const Jsonl = JsonlModule.default ?? JsonlModule;
 
 export async function runtime(root, { compression = 'none' } = {}) {
   const ctx = new Context();

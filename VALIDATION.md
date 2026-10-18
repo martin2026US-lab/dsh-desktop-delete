@@ -1,5 +1,24 @@
 # Validation
 
+## 0.1.2 — 2026-10-18 (Asia/Singapore)
+
+Target: official Harness **0.2.1-rc.2**, release source commit `687f282e8625c6b8d11ff58211a90524be2e4317`. Reviewed the desktop bundled launcher, session menu/overlay slots, workspace row `workspaceId`, retention/navigation APIs, registry archive operations, exact Session/Agent detach entries, JSONL tracker/writer and historical locator/migration paths against that tag.
+
+Executed on Windows with Node.js 24.19.0 and PowerShell 7:
+
+- `pnpm run verify`: **19 passed**, including three client navigation/catalog tests and four installer checks. The installer accepts 0.2.0-rc.2 and 0.2.1-rc.2, rejects unvalidated 0.2.1-rc.1 and 0.2.2, and does not install during `-CheckOnly`.
+- `node --test test/integration/*.test.mjs` with `DSH_RUNTIME_ROOT` set to an isolated install of official 0.2.1-rc.2 packages: **8 passed**. Covers live/cold removal, another conversation surviving, restart persistence, foreign writer locks, rollback with subsequent durable writes, plain/Zstandard v3 migration, and invalid migration preserving source bytes.
+
+Total: **27 passed, 0 failed**. Filesystem tests required execution outside the desktop sandbox because it refused realpath/atomic rename in disposable test directories. No existing user profiles, conversations, credentials or model calls were used.
+
+The runtime packages are public npm releases, not extracted desktop resources. The JSONL plugin now uses named exports, so the fixture accepts both named and default plugin shapes. The runtime package manifest and CI job reproduce this validation without an installed desktop application. CI is configured for Windows/Linux; local results above are Windows only.
+
+Installed-app UI and plugin installation were **not** repeated for 0.2.1-rc.2 on this machine. The screenshots below belong to the previous release. This update changes the version gates and current-conversation navigation; the deletion backend's algorithm is unchanged. Exact support for 0.2.0-rc.2 is retained based on the prior evidence below.
+
+Official reference: [Harness 0.2.1-rc.2 release](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.2).
+
+## Previous release evidence (0.1.1)
+
 Validated on **2026-10-01 (Asia/Singapore)**, plugin **0.1.1**.
 
 Target: official Harness desktop **0.2.0-rc.2**, build commit `04f392c9ddd144fa426da2045178797da6db6c11`. Runtime services were obtained from a read-only copy of the official installed resources; they are not distributed in this repository.

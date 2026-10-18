@@ -8,9 +8,10 @@ $desktopLauncher = Join-Path (Split-Path -Parent $ApplicationPath) 'resources\ru
 if (-not (Test-Path -LiteralPath $desktopLauncher -PathType Leaf)) { throw '未找到桌面端自带的 dsh 命令。请使用 -ApplicationPath 指定 DeepSeek Harness.exe。' }
 $installedVersion = (& $desktopLauncher --version | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) { throw '无法读取桌面端版本。' }
-if ($installedVersion -notmatch '(?m)^0\.2\.0-rc\.2$') { throw "此插件仅验证过 0.2.0-rc.2；检测到：$installedVersion" }
-$packageFile = Join-Path $PSScriptRoot 'dsh-desktop-delete-0.1.1.tgz'
-if (-not (Test-Path -LiteralPath $packageFile -PathType Leaf)) { throw '请将安装脚本和 dsh-desktop-delete-0.1.1.tgz 放在同一目录。' }
+$supportedVersions = @('0.2.0-rc.2', '0.2.1-rc.2')
+if ($installedVersion -notin $supportedVersions) { throw "此插件仅支持 $($supportedVersions -join '、')；检测到：$installedVersion" }
+$packageFile = Join-Path $PSScriptRoot 'dsh-desktop-delete-0.1.2.tgz'
+if (-not (Test-Path -LiteralPath $packageFile -PathType Leaf)) { throw '请将安装脚本和 dsh-desktop-delete-0.1.2.tgz 放在同一目录。' }
 $runningDesktop = @(Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue).Count -gt 0
 Write-Host "桌面端版本：$installedVersion"
 Write-Host "插件包：$packageFile"
