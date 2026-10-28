@@ -24,6 +24,8 @@ jobs:
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           if ($env:GITHUB_REF_NAME -cne "v$version") { throw 'Tag and package version differ.' }
+          npm ci --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { throw 'Test dependency installation failed.' }
           npm ci --ignore-scripts --prefix test/integration/runtime
           if ($LASTEXITCODE -ne 0) { throw 'Runtime installation failed.' }
           npm run verify
@@ -36,10 +38,10 @@ jobs:
           New-Item -ItemType Directory -Path dist | Out-Null
           npm pack --pack-destination dist
           if ($LASTEXITCODE -ne 0) { throw 'Packaging failed.' }
-          Copy-Item Install.ps1 dist
+          Copy-Item Install.ps1, package.json dist
           $package = "dist/dsh-desktop-delete-$version.tgz"
           $zip = "dist/dsh-desktop-delete-$version-windows.zip"
-          Compress-Archive -LiteralPath $package, dist/Install.ps1 -DestinationPath $zip
+          Compress-Archive -LiteralPath $package, dist/Install.ps1, dist/package.json -DestinationPath $zip
           $hashes = @($package, $zip) | ForEach-Object {
             $hash = Get-FileHash -LiteralPath $_ -Algorithm SHA256
             "$($hash.Hash.ToLowerInvariant())  $(Split-Path -Leaf $_)"

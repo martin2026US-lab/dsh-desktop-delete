@@ -63,6 +63,39 @@ test("live foreign lifecycle is refused before any state or file mutation", asyn
   const f=await fixture(t,{live:true}); f.ctx.agents.store=new Map();
   await assert.rejects(deleteSession(f.ctx,f.id),{code:"SESSION_BUSY"}); await access(f.log); assert.deepEqual(f.calls,[]);
 });
+
+test("changed runtime services are refused before archiving even a cold session", async t => {
+  const f = await fixture(t);
+  f.ctx.sessions.detachEntered = undefined;
+  await assert.rejects(deleteSession(f.ctx, f.id), { code: "UNSUPPORTED_RUNTIME" });
+  assert.deepEqual(f.calls, []);
+  await access(f.log);
+});
+
+test("missing agent idle capability is refused before activity is stopped", async t => {
+  const f = await fixture(t, { live: true });
+  f.agent.whenIdle = undefined;
+  await assert.rejects(deleteSession(f.ctx, f.id), { code: "SESSION_BUSY" });
+  assert.deepEqual(f.calls, []);
+  await access(f.log);
+});
+
+test("public stat location works without the private JSONL locator", async t => {
+  const f = await fixture(t);
+  f.ctx.sessionPersistence.stat = async () => ({ header: { id: f.id }, location: { kind: "jsonl", path: f.log } });
+  f.ctx.sessionPersistence.resolveCurrentLog = undefined;
+  f.ctx.sessionPersistence.locate = undefined;
+  assert.equal(await resolveDirectory(f.ctx, f.id), await realpath(f.dir));
+  await deleteSession(f.ctx, f.id);
+  await assert.rejects(access(f.dir));
+});
+
+test("public foreign backend location is refused without falling back to JSONL internals", async t => {
+  const f = await fixture(t);
+  f.ctx.sessionPersistence.stat = async () => ({ header: { id: f.id }, location: { kind: "sqlite", path: f.log } });
+  await assert.rejects(resolveDirectory(f.ctx, f.id), { code: "UNSUPPORTED_RUNTIME" });
+  await access(f.log);
+});
 test("a stuck agent times out without closing its writer or removing data", async t => {
   const f=await fixture(t,{live:true,pinned:true}); f.agent.whenIdle=()=>new Promise(()=>{});
   await assert.rejects(deleteSession(f.ctx,f.id,new Set(),{timeoutMs:10}),{code:"SESSION_BUSY"});

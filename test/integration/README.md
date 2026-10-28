@@ -4,7 +4,7 @@ These eight tests exercise actual Harness services with disposable histories und
 
 ## Public 0.2.1-rc.2 runtime (recommended)
 
-Requirements: Node.js 24 and npm. From the repository root:
+Requirements: Node.js 24 and npm. Install root test dependencies with `npm ci --ignore-scripts`. For the reproducible rc.2 baseline, run from the repository root:
 
 ```sh
 npm ci --ignore-scripts --prefix test/integration/runtime
@@ -25,7 +25,16 @@ POSIX shell:
 DSH_RUNTIME_ROOT="$PWD/test/integration/runtime" npm run test:integration
 ```
 
-GitHub Actions runs this setup on Windows and Linux. The standalone suite runs separately; its four PowerShell/Windows launcher checks skip on Linux.
+## Test a newer supported runtime
+
+```sh
+node scripts/prepare-runtime.mjs 0.2.1-rc.3 test/integration/selected-runtime
+npm install --ignore-scripts --prefix test/integration/selected-runtime
+```
+
+Set `DSH_RUNTIME_ROOT` to that selected-runtime directory and run the same integration command. Preparation pins all DSH packages to the requested version and reads its official Cordis peer range. It does not bypass dependency conflicts.
+
+GitHub Actions tests rc.2, rc.3, rc.4, 0.2.2-alpha.2 and the newest eligible npm release on Windows/Linux. Discovery runs on pushes and daily at 02:00 UTC. The standalone suite runs separately; nine Windows installer tests skip on Linux.
 
 ## Extracted desktop runtime (alternative)
 

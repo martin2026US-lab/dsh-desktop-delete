@@ -4,7 +4,7 @@
 
 A small community plugin that adds **Delete conversation** to the DeepSeek Harness desktop session menu. Includes a native confirmation dialog and Chinese/English labels.
 
-**Version:** 0.1.2 · **Target Harness:** 0.2.1-rc.2 (also supports 0.2.0-rc.2) · **License:** MIT
+**Version:** 0.1.3 · **Harness range:** 0.2.0-rc.2 or >=0.2.1-rc.2, <0.3.0 (including prereleases) · **License:** MIT
 
 ## Screenshots
 
@@ -20,7 +20,7 @@ These four screenshots were provided from the 0.1.1 / Harness 0.2.0-rc.2 install
 
 ## Install on Windows
 
-1. Download **dsh-desktop-delete-0.1.2-windows.zip** from [Releases](https://github.com/martin2026US-lab/dsh-desktop-delete/releases/latest) and extract it.
+1. Download **dsh-desktop-delete-0.1.3-windows.zip** from [Releases](https://github.com/martin2026US-lab/dsh-desktop-delete/releases/latest) and extract it.
 2. Fully quit Harness using **Exit** in the system tray. Closing its window leaves the background process running.
 3. Run the following in PowerShell 7, replacing the directory with the extracted folder:
 
@@ -28,14 +28,14 @@ These four screenshots were provided from the 0.1.1 / Harness 0.2.0-rc.2 install
 & 'C:\Program Files\PowerShell\7\pwsh.exe' -NoLogo -NoProfile -File '<extracted-folder>\Install.ps1'
 ~~~
 
-The ZIP keeps Install.ps1 and dsh-desktop-delete-0.1.2.tgz together. Add **-ApplicationPath** with the path to DeepSeek Harness.exe for a custom location, or **-CheckOnly** to check compatibility without installing. The script uses the desktop application's bundled command runtime; you do not need a separate Node.js/npm installation for installation.
+Keep all three ZIP files together: Install.ps1, package.json and dsh-desktop-delete-0.1.3.tgz. The installer reads the version range from that manifest and evaluates it with the desktop runtime’s own semver library. Add **-ApplicationPath** with the path to DeepSeek Harness.exe for a custom location, or **-CheckOnly** to check compatibility without installing. The script uses the desktop application's bundled command runtime; you do not need a separate Node.js/npm installation for installation.
 
 4. Reopen Harness. Choose **Delete conversation** in the three-dot menu and confirm.
 
 For manual installation, use the **desktop-bundled** dsh command, with Harness fully exited:
 
 ~~~powershell
-dsh plugin --profile desktop add '<full-path>\dsh-desktop-delete-0.1.2.tgz'
+dsh plugin --profile desktop add '<full-path>\dsh-desktop-delete-0.1.3.tgz'
 ~~~
 
 To uninstall, fully quit Harness and use the same bundled command:
@@ -59,18 +59,25 @@ Deletion is permanent. Workspace files, other conversations and shared attachmen
 
 ## Compatibility
 
-Targets official **Harness desktop 0.2.1-rc.2**, retaining support for **0.2.0-rc.2**. The new release was checked against the official release source and published runtime services on Windows; installed-app UI testing has not been repeated for 0.2.1-rc.2. These versions have no public close-one-session API, so the plugin checks version-specific lifecycle/writer internals. The Harness engine accepts exactly these two releases; other releases require revalidation. Refused operations display an error and preserve the conversation whenever rollback succeeds.
+Uses a bounded range: `0.2.0-rc.2 || >=0.2.1-rc.2 <0.3.0-0`. Harness includes prereleases in range checks. Version 0.1.3 passed actual service integration tests on **0.2.1-rc.2, rc.3, rc.4 and 0.2.2-alpha.2**. Support for 0.2.0-rc.2 retains the prior release evidence.
+
+The range prevents compatible 0.2.x upgrades from being blocked solely by an exact-version list. Before deleting, the plugin still verifies required service/lifecycle capabilities, session identity, native writer ownership and managed-directory bounds. Newer runtimes use the public `stat().location` field when available; older ones retain the checked JSONL locator fallback. Unsupported interfaces refuse deletion before activity/archive mutation. There is still no public one-session deletion API in the reviewed releases; lifecycle cleanup uses checked internals.
+
+CI runs daily at 02:00 UTC (10:00 Asia/Singapore), on pushes, and manually. It discovers the newest published runtime inside the declared range and tests it alongside four baselines on Windows/Linux. Failures appear in GitHub Actions; CI does not change installed plugins or publish fixes automatically. The 0.3.x family requires a new review. A version range and passing tests cannot guarantee permanent compatibility.
+
+Installed-desktop menu interaction has not been repeated for these new versions. Refused deletes preserve the conversation whenever rollback succeeds.
 
 ## Development and tests
 
-Node.js 24 or newer; no external npm dependencies.
+Node.js 24 or newer. The plugin has no external runtime npm dependencies; tests and CI version discovery use semver as a development dependency.
 
 ~~~sh
+npm ci --ignore-scripts
 npm run verify
 npm pack
 ~~~
 
-The standalone suite has 19 tests (four Windows installer checks skip on Linux). Eight integration tests exercise real Harness 0.2.1-rc.2 runtime services; see [integration setup](test/integration/README.md). Both suites passed locally on Windows, **27/27**. GitHub Actions runs both suites on Windows and Linux. [VALIDATION.md](VALIDATION.md) distinguishes native-runtime, fixture-UI and installed-app evidence.
+The standalone suite has 29 tests (nine Windows installer checks skip on Linux). Eight integration cases passed on each of four official runtime versions: **61 passing test executions** locally on Windows. See [integration setup](test/integration/README.md) and [VALIDATION.md](VALIDATION.md) for the distinction between service, fixture and installed-app evidence.
 
 ## Credits
 

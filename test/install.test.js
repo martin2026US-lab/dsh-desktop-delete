@@ -4,24 +4,34 @@ import { mkdtemp, mkdir, copyFile, writeFile, rm, readFile } from "node:fs/promi
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+import semver from "semver";
 
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
-for (const version of ["0.2.0-rc.2", "0.2.1-rc.2", "0.2.1-rc.1", "0.2.2"]) {
+for (const version of ["0.2.0-rc.2", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.2-alpha.2", "0.2.9", "0.2.1-rc.1", "0.3.0-alpha.1", "0.3.0"]) {
   test(`Windows installer compatibility check: ${version}`, { skip: process.platform !== "win32" }, async (t) => {
     const root = await mkdtemp(join(tmpdir(), "dsdd-install-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     const bin = join(root, "resources", "runtime", "cli", "bin");
     await mkdir(bin, { recursive: true });
     await copyFile(new URL("../Install.ps1", import.meta.url), join(root, "Install.ps1"));
-    await writeFile(join(root, "DeepSeek Harness.exe"), "fixture only");
+    await copyFile(new URL("../package.json", import.meta.url), join(root, "package.json"));
+    // Node accepts the same Node-mode flags used by the bundled Electron.
+    await copyFile(process.execPath, join(root, "DeepSeek Harness.exe"));
+    const runtimeModules = join(root, 'resources', 'app.asar', 'dsh', 'node_modules');
+    await mkdir(runtimeModules, { recursive: true });
+    const { symlink } = await import('node:fs/promises');
+    const { dirname } = await import('node:path');
+    const require = createRequire(import.meta.url);
+    await symlink(dirname(require.resolve('semver/package.json')), join(runtimeModules, 'semver'), 'junction');
     await writeFile(join(root, `dsh-desktop-delete-${metadata.version}.tgz`), "fixture only");
     // Any command beyond --version is an error: -CheckOnly must never install.
     await writeFile(join(bin, "dsh.cmd"), `@echo off\r\nif "%~1"=="--version" (\r\n echo ${version}\r\n exit /b 0\r\n)\r\nexit /b 99\r\n`);
     const result = spawnSync("pwsh.exe", ["-NoLogo", "-NoProfile", "-File", join(root, "Install.ps1"),
       "-ApplicationPath", join(root, "DeepSeek Harness.exe"), "-CheckOnly"], { encoding: "utf8" });
     assert.ifError(result.error);
-    const supported = metadata.engines.dsh.split(" || ").includes(version);
+    const supported = semver.satisfies(version, metadata.engines.dsh, { includePrerelease: true });
     assert.equal(result.status === 0, supported, result.stdout + result.stderr);
     assert.match(result.stdout + result.stderr, new RegExp(version.replaceAll(".", "\\.")));
   });

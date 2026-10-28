@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-针对 DeepSeek Harness **0.2.1-rc.2 官方桌面端**的最小删除插件，保留对 **0.2.0-rc.2** 的支持。插件版本：**0.1.2**。
+DeepSeek Harness 桌面端删除插件，版本 **0.1.3**。兼容范围：`0.2.0-rc.2 || >=0.2.1-rc.2 <0.3.0-0`，包含范围内的预发布版本。
 
 在对话的三点菜单中，“归档会话”下方增加红色 **删除对话**。点击后显示原生确认框；取消不会修改会话，确认后停止目标对话的活动并删除其 JSONL 历史记录，移除工作区、置顶和归档记录，以及当前进程内的 Session/Agent。
 
@@ -18,9 +18,9 @@
 
 ## 安装
 
-1. 从 [Releases](https://github.com/martin2026US-lab/dsh-desktop-delete/releases/latest) 下载 **dsh-desktop-delete-0.1.2-windows.zip** 并解压。
+1. 从 [Releases](https://github.com/martin2026US-lab/dsh-desktop-delete/releases/latest) 下载 **dsh-desktop-delete-0.1.3-windows.zip** 并解压。
 2. 从系统托盘菜单完全退出 DeepSeek Harness。仅关闭窗口不会退出后台进程。
-3. 保持 `Install.ps1` 和 `dsh-desktop-delete-0.1.2.tgz` 在同一目录。
+3. 保持 ZIP 内的三个文件在同一目录：`Install.ps1`、`package.json` 和 `dsh-desktop-delete-0.1.3.tgz`。
 4. 使用 PowerShell 7 执行：
 
 ```powershell
@@ -36,7 +36,7 @@
 也可以按官方方式，使用**桌面端自带**的 `dsh` 命令安装：
 
 ```powershell
-dsh plugin --profile desktop add '<完整路径>\dsh-desktop-delete-0.1.2.tgz'
+dsh plugin --profile desktop add '<完整路径>\dsh-desktop-delete-0.1.3.tgz'
 ```
 
 卸载前同样完全退出桌面端，然后运行：
@@ -59,19 +59,28 @@ dsh plugin --profile desktop remove dsh-desktop-delete
 - 退出维护操作后，仅释放目标 Agent 的 scope，再移除精确匹配的 Agent/Session 注册项，防止内存目录和搜索源让对话再次出现。
 - 当前对话删除前先切换到空白对话；重复点击由服务端合并处理。
 
-这两个 Harness 版本没有公开的“关闭单个 Host Session”接口，因此精确 writer 和生命周期移除依赖相应内部接口，并在操作前检测接口。`engines.dsh` 仅允许 0.2.0-rc.2 和 0.2.1-rc.2；其他版本需重新验证。0.1.2 同时修复了删除当前对话前切换页面时使用的工作区字段（`workspaceId`）。
+0.1.3 已通过 **0.2.1-rc.2、rc.3、rc.4、0.2.2-alpha.2** 的真实运行时测试。安装器直接读取包内 `engines.dsh`，使用桌面运行时自带的标准 semver 库判断，不再单独维护版本白名单。
+
+### 后续版本兼容策略
+
+- 声明有边界的 0.2.x 兼容范围，避免每个 rc 更新都因版本字符串不同而被拒绝。
+- 删除前检查实际服务、生命周期和 writer 接口；接口缺失时，在停止任务或修改归档状态前拒绝执行。
+- 新版优先使用官方 `stat().location` 存储位置字段，减少对私有 locator 的依赖；旧版保留经过路径检查的后备方案。
+- GitHub Actions 每天新加坡时间 10:00 自动发现兼容范围内最新已发布运行时，并与四个基线版本一起在 Windows/Linux 测试。失败会显示在 Actions；不会自动修改本机插件或自动发布修复。
+- `0.3.x` 及更高系列仍需重新评估。上游暂未提供公开的单会话删除接口，生命周期清理仍依赖经过检查的内部接口，因此无法承诺永久兼容。
 
 删除是永久操作，确认框会提示无法撤销。该功能删除会话本身的历史记录，不删除工作区文件、其他会话或共享附件，也不承诺擦除通用缓存、备份或诊断日志中的副本。
 
 ## 验证
 
 ```powershell
+npm ci --ignore-scripts
 node --check lib/index.js
 node --check lib/client.js
 node --test test/*.test.js
 ```
 
-详细结果见 [VALIDATION.md](VALIDATION.md)。Windows 下 19 项独立测试和 8 项官方 0.2.1-rc.2 运行时集成测试全部通过，共 27 项。GitHub Actions 已配置 Windows/Linux 两套测试；4 项 Windows 安装脚本测试在 Linux 上跳过。[运行时测试说明](test/integration/README.md) 介绍复现方法。效果图保留自 0.1.1 / Harness 0.2.0-rc.2；本次未重新操作已安装的 0.2.1-rc.2 桌面窗口，菜单接口已与官方源码核对。
+详细结果见 [VALIDATION.md](VALIDATION.md)。Windows 下 **29 项独立测试**及四个官方运行时各 **8 项集成测试**全部通过，共 **61 次测试执行**。9 项 Windows 安装器测试在 Linux 上跳过。[运行时测试说明](test/integration/README.md) 介绍复现方法。效果图仍来自 0.1.1 / Harness 0.2.0-rc.2；新版桌面菜单操作尚未重新实测。
 
 参考项目：[martin2026US-lab/dsh-session-organizer](https://github.com/martin2026US-lab/dsh-session-organizer)。删除的停止、flush、关闭 writer、隔离目录和失败恢复设计沿用该项目思路，桌面菜单与精确生命周期清理由此插件实现。
 

@@ -3,6 +3,9 @@ name: Verify
 on:
   push:
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
 
 permissions:
   contents: read
@@ -18,20 +21,42 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: npm ci --ignore-scripts
       - run: npm run verify
       - run: npm pack
 
-  runtime:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    env:
-      DSH_RUNTIME_ROOT: ${{ github.workspace }}/test/integration/runtime
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.discover.outputs.versions }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: npm ci --ignore-scripts --prefix test/integration/runtime
+      - run: npm ci --ignore-scripts
+      - id: discover
+        run: |
+          versions=$(node scripts/prepare-runtime.mjs --matrix)
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+
+  runtime:
+    needs: versions
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        dsh: ${{ fromJSON(needs.versions.outputs.versions) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      DSH_RUNTIME_ROOT: ${{ github.workspace }}/test/integration/selected-runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: node scripts/prepare-runtime.mjs "${{ matrix.dsh }}" test/integration/selected-runtime
+      - run: npm install --ignore-scripts --prefix test/integration/selected-runtime
       - run: npm run test:integration

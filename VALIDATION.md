@@ -1,5 +1,22 @@
 # Validation
 
+## 0.1.3 — 2026-10-28 (Asia/Singapore)
+
+The reported local desktop is **0.2.1-rc.3**. Version 0.1.2 declared only 0.2.0-rc.2 and 0.2.1-rc.2, causing Harness to reject it. Compared official source tags: deletion lifecycle, JSONL writer and registry seams are unchanged from rc.2 through rc.4. Reviewed 0.2.2-alpha.2, which adds public physical locations to persistence stat/list results but still exposes no public one-session delete operation.
+
+Source commits: rc.3 `1f81c047fc48fa190a683e469daa699857e9afe8`; rc.4 `504a01a9578abc2c6f1fb896b1dc322c9fe24f66`; 0.2.2-alpha.2 `f3803c96974ad4a94195fb97e5c637e9c2a3afe3`.
+
+Local Windows validation with Node.js 24 and PowerShell 7:
+
+- **29 standalone tests**: existing deletion/rollback/request cases; cold-session capability changes refused before mutation; missing idle capability; public location without private locator; foreign public backend refusal; CI version discovery; nine installer version boundaries.
+- **8 real-runtime tests per version** on 0.2.1-rc.2, rc.3, rc.4 and 0.2.2-alpha.2: **32 passed**. Each tests native locks, live/cold removal, historical plain/Zstandard migration, rollback and restart persistence using temporary histories.
+- Total: **61 passed, 0 failed**. No user conversations were deleted for verification. Integration setup now installs projection services before Agents, satisfying the new Agent dependency in 0.2.2-alpha.2. Runtime preparation reads the official Cordis peer requirement rather than overriding dependency checks.
+- The new installer was checked against the local desktop’s actual bundled semver library. Its version range and package filename come from the ZIP’s package.json. No separate system Node is required for installation.
+
+The accepted range is broader than the tested versions. Safety still depends on runtime capability checks, identity/path restrictions and upstream internal semantics. A matching interface cannot prove an unchanged implementation; daily CI improves detection but neither guarantees future compatibility nor updates user installations. The 0.3.x family stays excluded. Installed-window UI interactions have not been repeated for this release.
+
+Official sources: [rc.3](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.3), [rc.4](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.4), [0.2.2-alpha.2](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.2-alpha.2).
+
 ## 0.1.2 — 2026-10-18 (Asia/Singapore)
 
 Target: official Harness **0.2.1-rc.2**, release source commit `687f282e8625c6b8d11ff58211a90524be2e4317`. Reviewed the desktop bundled launcher, session menu/overlay slots, workspace row `workspaceId`, retention/navigation APIs, registry archive operations, exact Session/Agent detach entries, JSONL tracker/writer and historical locator/migration paths against that tag.

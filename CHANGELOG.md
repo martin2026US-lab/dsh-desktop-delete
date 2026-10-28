@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3 — 2026-10-28
+
+- Replace the exact-version list with `0.2.0-rc.2 || >=0.2.1-rc.2 <0.3.0-0`, including prereleases through Harness’s normal range evaluation.
+- Read installer compatibility and archive version from the bundled package.json, using the desktop runtime’s semver implementation.
+- Refuse changed service/lifecycle capabilities before stopping activity or changing archive state.
+- Prefer the newer public stat().location API over private storage locators.
+- Add daily automatic discovery and Windows/Linux integration testing of the newest eligible published runtime alongside rc.2, rc.3, rc.4 and 0.2.2-alpha.2 baselines.
+- Validate 29 standalone tests and 32 real-service test executions locally on Windows. Permanent compatibility is not guaranteed while upstream lifecycle cleanup remains private.
+
 ## 0.1.2 — 2026-10-18
 
 - Support Harness desktop 0.2.1-rc.2 alongside 0.2.0-rc.2 in the plugin engine declaration and Windows installer; keep other releases gated for revalidation.

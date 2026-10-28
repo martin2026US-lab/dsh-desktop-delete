@@ -22,7 +22,7 @@ export async function runtime(root, { compression = 'none' } = {}) {
   ctx.provide('dshHomePath', (...parts) => join(root, ...parts));
   ctx.provide('llm', {}); ctx.provide('tools', {});
   await ctx.plugin(SystemPrompt, {});
-  await ctx.plugin(Sessions); await ctx.plugin(Agents); await ctx.plugin(Projections);
+  await ctx.plugin(Sessions); await ctx.plugin(Projections); await ctx.plugin(Agents);
   await ctx.plugin(Jsonl, {root:join(root,'sessions'),compression});
   await ctx.plugin(Storage); await ctx.plugin(StorageJson, {root:join(root,'storages')});
   await ctx.plugin(StorageDomain,{backend:'json'});
